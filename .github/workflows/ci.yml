@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://balancevault_api_login:ci-only-password@127.0.0.1:5432/balancevault_test
+      AUTH_DATABASE_URL: postgresql://balancevault_auth_login:ci-only-password@127.0.0.1:5432/balancevault_test
+      REDIS_URL: redis://127.0.0.1:6379/0
+      JWT_ACCESS_SECRET: ci-only-jwt-secret-never-used-outside-disposable-tests
+      BALANCEVAULT_ACTOR_ASSERTION_KEY: efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef
+      WEB_ORIGIN: http://localhost:5173
+      VITE_API_BASE_URL: http://localhost:3001
+      BALANCEVAULT_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/balancevault_test
+      BALANCEVAULT_TEST_RUNTIME_DATABASE_URL: postgresql://balancevault_api_login:ci-only-password@127.0.0.1:5432/balancevault_test
+      BALANCEVAULT_TEST_AUTH_DATABASE_URL: postgresql://balancevault_auth_login:ci-only-password@127.0.0.1:5432/balancevault_test
+      BALANCEVAULT_TEST_PROVISIONING_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/balancevault_provisioning_test
+      BALANCEVAULT_TEST_PROVISIONING_RUNTIME_DATABASE_URL: postgresql://balancevault_api_login:ci-only-password@127.0.0.1:5432/balancevault_provisioning_test
+      BALANCEVAULT_TEST_PROVISIONING_BOOTSTRAP_DATABASE_URL: postgresql://balancevault_bootstrap_login:ci-only-password@127.0.0.1:5432/balancevault_provisioning_test
+      BALANCEVAULT_TEST_OVERFLOW_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/balancevault_overflow_test
+      BALANCEVAULT_TEST_OVERFLOW_RUNTIME_DATABASE_URL: postgresql://balancevault_api_login:ci-only-password@127.0.0.1:5432/balancevault_overflow_test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Provision disposable PostgreSQL roles and databases
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f apps/api/prisma/roles.sql
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE balancevault_migration_owner PASSWORD 'ci-only-password'"
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE balancevault_api_login LOGIN PASSWORD 'ci-only-password'"
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'GRANT balancevault_runtime TO balancevault_api_login'
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE balancevault_auth_login LOGIN PASSWORD 'ci-only-password'"
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'GRANT balancevault_auth_runtime TO balancevault_auth_login'
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE balancevault_bootstrap_login LOGIN PASSWORD 'ci-only-password'"
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'GRANT balancevault_bootstrap_operator TO balancevault_bootstrap_login'
+          for database in balancevault_test balancevault_provisioning_test balancevault_overflow_test; do
+            psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${database} OWNER balancevault_migration_owner"
+            psql -h 127.0.0.1 -U postgres -d "${database}" -v ON_ERROR_STOP=1 -c 'ALTER SCHEMA public OWNER TO balancevault_migration_owner'
+          done
+
+      - name: Apply migrations to disposable test databases
+        run: |
+          set -euo pipefail
+          MIGRATION_DATABASE_URL='postgresql://balancevault_migration_owner:ci-only-password@127.0.0.1:5432/balancevault_test' npm run db:migrate -w apps/api
+          MIGRATION_DATABASE_URL='postgresql://balancevault_migration_owner:ci-only-password@127.0.0.1:5432/balancevault_provisioning_test' npm run db:migrate -w apps/api
+          MIGRATION_DATABASE_URL='postgresql://balancevault_migration_owner:ci-only-password@127.0.0.1:5432/balancevault_overflow_test' npm run db:migrate -w apps/api
+
+      - name: Provision disposable assertion verifier
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d balancevault_test -v ON_ERROR_STOP=1 \
+            -c 'SET ROLE balancevault_auth_owner' \
+            -c "INSERT INTO balancevault_auth_private.actor_assertion_key(singleton,secret) VALUES(true,decode(repeat('ef',32),'hex'))"
+
+      - name: Validate Prisma schema and generate client
+        run: |
+          npx prisma validate --config apps/api/prisma.config.js
+          npm run db:generate
+
+      - name: Backend and PostgreSQL integration tests
+        run: npm test
+
+      - name: Frontend tests
+        run: npm test -w apps/web
+
+      - name: Production build
+        run: npm run build
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Whitespace check
+        run: git diff --check HEAD^ HEAD

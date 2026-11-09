@@ -1,0 +1,175 @@
+# Free hackathon demo deployment
+
+This guide deploys the React/Vite frontend to Vercel, the Express API to Render, PostgreSQL to Neon, and Redis to Upstash. Use synthetic demo data only. This setup is for a hackathon demo, not real funds or production availability. Render's free web service sleeps after 15 idle minutes and may take about a minute to wake; Neon/Upstash free plans have their own usage and availability limits.
+
+## 1. Create a fresh Neon demo database
+
+Create a new Neon project/branch and database for the demo (PostgreSQL 17). Keep this separate from every local or existing database. In Neon, use the direct, non-pooled endpoint for role provisioning and migrations; use TLS connection strings (`sslmode=require`). Do not use the Neon project owner as an API login.
+
+Run the repository role script as the Neon project owner from a terminal. Use a connection string without its password so `psql` prompts for it:
+
+```sh
+psql "host=<NEON_DIRECT_HOST> dbname=<DEMO_DATABASE> user=<NEON_PROJECT_OWNER> sslmode=require" \
+  -v ON_ERROR_STOP=1 -f apps/api/prisma/roles.sql
+```
+
+Neon does not expose a PostgreSQL role with the actual `SUPERUSER` attribute. The role declarations in `roles.sql` set restrictive `NOSUPERUSER`/`NOCREATEDB`/`NOCREATEROLE`/`NOREPLICATION`/`NOBYPASSRLS` attributes when creating the roles. The later `ALTER ROLE` statements repeat the non-superuser restrictions and normalize `LOGIN`/`INHERIT`; they omit only `NOSUPERUSER`, which Neon rejects because it is an attempt to change the `SUPERUSER` attribute. Run this as the Neon project owner, whose delegated role-management privileges are needed for the remaining role-attribute changes. If you previously ran this file and it stopped at the first `ALTER ROLE`, rerun the whole file after updating; the role creation block uses `IF NOT EXISTS`, and the grants are repeatable. Then verify all eight roles' attributes before proceeding, especially if any role existed before this script was run:
+
+```sql
+SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole,
+       rolreplication, rolbypassrls, rolinherit
+FROM pg_catalog.pg_roles
+WHERE rolname IN (
+  'balancevault_migration_owner', 'balancevault_posting_owner',
+  'balancevault_runtime', 'balancevault_auth_owner',
+  'balancevault_account_owner', 'balancevault_provisioning_owner',
+  'balancevault_bootstrap_operator', 'balancevault_auth_runtime'
+)
+ORDER BY rolname;
+```
+
+Reconnect interactively as the Neon project owner. `psql` prompts for its password; the session is needed for the `\password` prompts below:
+
+```sh
+psql "host=<NEON_DIRECT_HOST> dbname=<DEMO_DATABASE> user=<NEON_PROJECT_OWNER> sslmode=require"
+```
+
+Set passwords without putting them in SQL or shell history, then create the two runtime login roles and the one-time bootstrap login. Keep these login roles separate:
+
+```sql
+\password balancevault_migration_owner
+CREATE ROLE balancevault_api_login NOLOGIN;
+```
+
+Then enter these `psql` meta-commands and SQL statements (repeat `\password`/`ALTER ROLE`/`GRANT` for the auth and bootstrap logins):
+
+```text
+\password balancevault_api_login
+```
+
+```sql
+ALTER ROLE balancevault_api_login LOGIN;
+GRANT balancevault_runtime TO balancevault_api_login;
+
+CREATE ROLE balancevault_auth_login NOLOGIN;
+```
+
+```text
+\password balancevault_auth_login
+```
+
+```sql
+ALTER ROLE balancevault_auth_login LOGIN;
+GRANT balancevault_auth_runtime TO balancevault_auth_login;
+
+CREATE ROLE balancevault_bootstrap_login NOLOGIN;
+```
+
+```text
+\password balancevault_bootstrap_login
+```
+
+```sql
+ALTER ROLE balancevault_bootstrap_login LOGIN;
+GRANT balancevault_bootstrap_operator TO balancevault_bootstrap_login;
+ALTER DATABASE <DEMO_DATABASE> OWNER TO balancevault_migration_owner;
+ALTER SCHEMA public OWNER TO balancevault_migration_owner;
+```
+
+The API logins must be SQL-created roles with only their respective `balancevault_runtime` or `balancevault_auth_runtime` membership. Do not create them through Neon Console/API role creation, which grants Neon administrative membership. The Neon error reported so far occurred before `roles.sql` reached its membership grants; therefore role grants, database/schema ownership transfer, and migration-time function ownership have not yet been verified on Neon. Test those steps on this fresh demo database before proceeding. The migrations rely on `balancevault_migration_owner` owning the database and `public` schema, having `SET ROLE` membership in the restricted function-owner roles, and assigning SECURITY DEFINER functions to those owners. If Neon rejects any operation or the API's startup privilege checks reject the runtime identities, stop: do not substitute the Neon owner or an administrator login for an app login. No application migration has been changed for Neon compatibility.
+
+Run migrations from a trusted terminal using the dedicated migration-owner direct connection, not from the Render app or a pooled endpoint. At the shell prompt, enter the full URI into the hidden input:
+
+```sh
+read -rs MIGRATION_DATABASE_URL
+export MIGRATION_DATABASE_URL
+npm run db:migrate
+```
+
+After migrations, create the assertion key once, store the same value in Render, and provision its verifier in Neon:
+
+```sh
+export BALANCEVAULT_ACTOR_ASSERTION_KEY="$(openssl rand -hex 32)"
+npm run admin:provision-actor-key -w apps/api
+```
+
+Do not print or commit the key. Keep it available only long enough to enter it in Render's environment settings, then unset it and `MIGRATION_DATABASE_URL`.
+
+## 2. Create Upstash Redis
+
+Create an Upstash Redis database in a region close to the Render service. In its **Connect → TCP** section, copy the TLS connection string beginning with `rediss://` and retain it as `REDIS_URL`. The API uses the standard Redis TCP protocol through `node-redis`; do not use the Upstash REST URL/token variables. Store the connection string only in Render's secret environment settings.
+
+## 3. Create the Render API service
+
+Create a Render Blueprint from this repository and select `render.yaml`, or create a Node web service with the same settings:
+
+- Root directory: repository root (`.`)
+- Node.js version: `24.x`
+- Runtime: Node 24 from `.node-version`
+- Plan: Free
+- Build command: `npm ci && DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build npm run db:generate`
+- Start command: `npm start`
+- Health check: `/api/ready`
+- Auto-deploy: disabled in the blueprint; deploy manually after configuration
+
+The `DATABASE_URL` in the build command is a local placeholder used only to let Prisma generate its client. It is not a database credential and is not present in the running service environment. Render supplies `PORT`; the server binds to `0.0.0.0`.
+
+Set these Render variables:
+
+| Name | Value |
+| --- | --- |
+| `NODE_ENV` | `production` |
+| `WEB_ORIGIN` | Exact Vercel production origin, e.g. `https://<project>.vercel.app` (no trailing slash) |
+| `DATABASE_URL` | Neon pooled TLS URL for `balancevault_api_login`; include `sslmode=require` |
+| `AUTH_DATABASE_URL` | Separate Neon pooled TLS URL for `balancevault_auth_login`; include `sslmode=require` |
+| `REDIS_URL` | Upstash TCP URL beginning `rediss://` |
+| `JWT_ACCESS_SECRET` | At least 32 random bytes; Render blueprint generates a value |
+| `BALANCEVAULT_ACTOR_ASSERTION_KEY` | Same 32-byte-or-longer hex key provisioned in Neon |
+| `DATABASE_POOL_MAX` | `3` for this small demo instance |
+
+Do not add `MIGRATION_DATABASE_URL`, `BALANCEVAULT_BOOTSTRAP_DATABASE_URL`, or `RECONCILIATION_DATABASE_URL` to the running API. `PORT` is supplied by Render; connection/readiness timeout variables can use their defaults.
+
+## 4. Bootstrap the first administrator
+
+Run the one-time bootstrap CLI locally from a trusted terminal. Use a direct Neon URL for the separate bootstrap login and enter the URL using hidden input. The CLI asks you to confirm the database name and reads the admin password without echoing it:
+
+```sh
+read -rs BALANCEVAULT_BOOTSTRAP_DATABASE_URL
+export BALANCEVAULT_BOOTSTRAP_DATABASE_URL
+npm run admin:bootstrap -w apps/api
+unset BALANCEVAULT_BOOTSTRAP_DATABASE_URL
+```
+
+Never set the bootstrap URL on Render. This command creates only the first ADMIN; auditors/admins after that use the existing invitation workflow.
+
+## 5. Create the Vercel frontend
+
+Import the repository into Vercel. Keep the project root directory at the repository root so Vercel can use the root npm workspaces and lockfile. The checked-in `vercel.json` sets the Vite framework, install/build commands, `apps/web/dist` output, SPA deep-link rewrites, and frontend security headers.
+
+Set this Vercel **Production** build variable before deploying:
+
+| Name | Value |
+| --- | --- |
+| `VITE_API_BASE_URL` | `https://balancevault-hackathon-api.onrender.com` |
+
+`VITE_API_BASE_URL` is embedded in the static JavaScript bundle; changing it requires a new Vercel build. The checked-in CSP allows this same API origin. If the Render service receives a different hostname, update both this value and the `connect-src` origin in `vercel.json` before rebuilding. Preview deployments are not CORS-enabled by default; use the stable production Vercel origin for the demo.
+
+Copy the Vercel production origin into Render's `WEB_ORIGIN`, save, and deploy/restart the Render service. Then verify:
+
+1. `https://<render-service>.onrender.com/api/health` returns healthy.
+2. `https://<render-service>.onrender.com/api/ready` returns ready.
+3. The Vercel home page and direct links such as `/login` load with a hard refresh.
+4. Browser developer tools show successful API requests, TLS connections, and no CORS/CSP errors.
+5. Login, account views, and audit views work using synthetic demo accounts only.
+
+Do not use real funds, real credentials, or sensitive personal data in this free demo. Render documents free web services as non-production and subject to sleep/restarts; Neon/Upstash free-tier quotas and persistence/availability should be checked in their current dashboards before the demo.
+
+## Provider references
+
+- [Vercel Vite deployment](https://vercel.com/docs/frameworks/frontend/vite)
+- [Vercel project configuration](https://vercel.com/docs/project-configuration/vercel-json)
+- [Render web services](https://render.com/docs/web-services)
+- [Render free services and limits](https://render.com/docs/free)
+- [Neon application connections](https://neon.com/docs/connect/connect-from-any-app)
+- [Neon role management](https://neon.com/docs/manage/roles)
+- [Upstash Redis with Render](https://upstash.com/docs/redis/quickstarts/render)

@@ -1,0 +1,38 @@
+{
+  "name": "@balance-vault/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test --test-concurrency=1",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy --config prisma.migrate.config.js",
+    "db:studio": "prisma studio",
+    "ledger:reconcile": "node scripts/reconcile-ledger.js",
+    "admin:bootstrap": "node scripts/bootstrap-admin.js",
+    "admin:provision-actor-key": "node scripts/provision-actor-assertion-key.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.7.3",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
+    "rate-limit-redis": "^6.0.2",
+    "redis": "^5.12.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prisma": "^7.0.0"
+  }
+}

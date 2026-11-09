@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: balancevault-hackathon-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm ci && DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build npm run db:generate
+    startCommand: npm start
+    healthCheckPath: /api/ready
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEB_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: BALANCEVAULT_ACTOR_ASSERTION_KEY
+        sync: false
+      - key: DATABASE_POOL_MAX
+        value: "3"
