@@ -48,9 +48,9 @@ function Icon({ name, size = 20 }) {
 
 function Brand({ inverse = false }) {
   return (
-    <a href="/dashboard" onClick={(event) => { event.preventDefault(); navigate('/dashboard'); }} className={`brand ${inverse ? 'brand-inverse' : ''}`} aria-label="BalanceVault dashboard">
-      <span className="brand-mark">b<span>.</span></span>
-      <span className="brand-word">balancevault</span>
+    <a href="/dashboard" onClick={(event) => { event.preventDefault(); navigate('/dashboard'); }} className={`brand ${inverse ? 'brand-inverse' : ''}`} aria-label="TransferTrail dashboard">
+      <span className="brand-mark" aria-hidden="true">↗</span>
+      <span className="brand-word">TransferTrail</span>
     </a>
   );
 }
@@ -123,29 +123,14 @@ function AuthPage({ mode }) {
 
   return (
     <main className="auth-page">
-      <section className="auth-story" aria-label="BalanceVault introduction">
-        <div className="auth-story-top"><Brand inverse /><span className="story-status"><i /> Secure ledger platform</span></div>
-        <div className="story-copy">
-          <p className="eyebrow">Money, accounted for.</p>
-          <h1>Confidence in every<br /><em>transaction.</em></h1>
-          <p className="story-description">A clearer view of your accounts, built on a ledger where every entry has its place.</p>
-        </div>
-        <div className="ledger-art" aria-hidden="true">
-          <div className="ledger-orbit orbit-one" /><div className="ledger-orbit orbit-two" />
-          <div className="ledger-card"><div className="ledger-card-top"><span>BV / PRIVATE LEDGER</span><span className="ledger-dot" /></div><div className="ledger-lines"><i /><i /><i /></div><div className="ledger-card-foot"><span>SECURE BY DESIGN</span><Icon name="shield" size={20} /></div></div>
-          <div className="ledger-chip chip-top">01 <span>Verified access</span></div>
-          <div className="ledger-chip chip-bottom"><span className="chip-check">✓</span> Every entry accountable</div>
-        </div>
-        <div className="story-footer"><span>Private by design</span><span>Built around financial integrity</span></div>
-      </section>
-
+      <header className="entry-header"><Brand /><span className="entry-label">YOUR MONEY, IN PERSPECTIVE</span></header>
       <section className="auth-form-side">
-        <div className="auth-mobile-brand"><Brand /></div>
+        <div className="entry-intro"><span className="entry-number">01 / ACCESS</span><h1>Follow the money.<br /><span>Know the story.</span></h1><p>A dedicated space for your accounts, transfers, and ledger.</p></div>
         <div className="auth-form-card">
           <div className="form-heading">
             <span className="form-kicker">{isRegister ? 'GET STARTED' : isInvitation ? 'SECURE INVITATION' : 'WELCOME BACK'}</span>
-            <h2>{isRegister ? 'Create your account' : isInvitation ? 'Set your password' : 'Sign in to your vault'}</h2>
-            <p>{isRegister ? 'Set up your secure account in a few steps.' : isInvitation ? 'Choose a password to activate your invited BalanceVault role.' : 'Your accounts, clearly in view.'}</p>
+            <h2>{isRegister ? 'Create your account' : isInvitation ? 'Set your password' : 'Sign in to TransferTrail'}</h2>
+            <p>{isRegister ? 'Set up your secure account in a few steps.' : isInvitation ? 'Choose a password to activate your invited TransferTrail role.' : 'Your accounts, clearly in view.'}</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -160,10 +145,10 @@ function AuthPage({ mode }) {
             </button>
           </form>
 
-          {!isInvitation && <p className="auth-switch">{isRegister ? 'Already have an account?' : 'New to BalanceVault?'} <button type="button" onClick={() => navigate(isRegister ? '/login' : '/register')}>{isRegister ? 'Sign in' : 'Create an account'}</button></p>}
+          {!isInvitation && <p className="auth-switch">{isRegister ? 'Already have an account?' : 'New to TransferTrail?'} <button type="button" onClick={() => navigate(isRegister ? '/login' : '/register')}>{isRegister ? 'Sign in' : 'Create an account'}</button></p>}
           <div className="secure-note"><Icon name="lock" size={15} /><span>Your connection is protected. We never display or store your password in the browser after signing in.</span></div>
         </div>
-        <p className="auth-legal">BalanceVault · Secure financial ledger</p>
+        <div className="entry-features"><span><b>01</b> Your accounts</span><span><b>02</b> Money movement</span><span><b>03</b> The full record</span></div><p className="auth-legal">TransferTrail / Financial ledger workspace</p>
       </section>
     </main>
   );
@@ -201,21 +186,11 @@ function AppShell({ pathname, forbidden = false }) {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-brand"><Brand inverse /><button className="mobile-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation">×</button></div>
-        <div className="workspace-label">WORKSPACE</div>
-        <nav className="main-nav" aria-label="Main navigation">
-          {navItems.map((item) => <a key={item.path} href={item.path} aria-current={pathname === item.path ? 'page' : undefined} className={`nav-link ${pathname === item.path ? 'nav-active' : ''}`} onClick={(event) => { event.preventDefault(); navigate(item.path); }}><Icon name={item.icon} /><span>{item.label}</span>{item.path === '/accounts' && <span className="nav-chevron">›</span>}</a>)}
-        </nav>
-        <div className="sidebar-bottom"><div className="sidebar-security"><span className="security-icon"><Icon name="shield" size={17} /></span><div><strong>Protected ledger</strong><small>Secure by design</small></div><span className="security-check">✓</span></div><div className="sidebar-version">BALANCEVAULT <span>·</span> PRIVATE</div></div>
-      </aside>
-      {mobileMenuOpen && <button className="sidebar-backdrop" aria-label="Close navigation" onClick={() => setMobileMenuOpen(false)} />}
-
+      <header className="workspace-header">
+        <div className="workspace-header-inner"><Brand /><div className="workspace-header-right"><BackendBadge /><ProfileMenu user={user} signOut={signOut} /><button className="mobile-menu-button" onClick={() => setMobileMenuOpen((value) => !value)} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen}><span /><span /><span /></button></div></div>
+        <nav className={`main-nav ${mobileMenuOpen ? 'main-nav-open' : ''}`} aria-label="Main navigation">{navItems.map((item) => <a key={item.path} href={item.path} aria-current={pathname === item.path ? 'page' : undefined} className={`nav-link ${pathname === item.path ? 'nav-active' : ''}`} onClick={(event) => { event.preventDefault(); navigate(item.path); }}><Icon name={item.icon} size={17} /><span>{item.label}</span></a>)}</nav>
+      </header>
       <div className="main-column">
-        <header className="topbar">
-          <div className="topbar-leading"><button className="mobile-menu-button" onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation"><span /><span /><span /></button><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{pathname.startsWith('/accounts/') ? 'Account details' : pathname.startsWith('/transactions/') ? pathname.split('/')[2]?.[0]?.toUpperCase() + pathname.split('/')[2]?.slice(1) : pathname.startsWith('/transfers/') ? 'Transfer details' : pathname === '/accounts' ? 'Accounts' : pathname === '/statements' ? 'Statements' : pathname === '/audit' ? 'Audit log' : 'Overview'}</strong></div></div>
-          <div className="topbar-actions"><BackendBadge /><span className="topbar-divider" /><ProfileMenu user={user} signOut={signOut} /></div>
-        </header>
         <main className="page-content">
           <Suspense fallback={<div className="loading-row" role="status"><span className="spinner spinner-dark" />Loading workspace</div>}>
           {pathname === '/accounts' ? <AccountsPage request={request} isAdmin={isAdmin} userRole={user.role} accountRefreshVersion={accountRefreshVersion} refreshAccounts={refreshAccounts} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />
@@ -232,7 +207,7 @@ function AppShell({ pathname, forbidden = false }) {
                 : pathname === '/audit' && ['ADMIN', 'AUDITOR'].includes(user.role) ? <AuditPage request={request} /> : <DashboardPage request={request} user={user} accountRefreshVersion={accountRefreshVersion} />}
           </Suspense>
         </main>
-        <footer className="app-footer"><span>BalanceVault <i>·</i> Financial clarity, by design.</span><span className="footer-secure"><Icon name="lock" size={13} /> Secure session</span></footer>
+        <footer className="app-footer"><span>TransferTrail <i>·</i> Financial clarity, by design.</span><span className="footer-secure"><Icon name="lock" size={13} /> Secure session</span></footer>
       </div>
     </div>
   );
@@ -253,41 +228,15 @@ function DashboardPage({ request, user, accountRefreshVersion }) {
 
   return (
     <>
-      <section className="welcome-panel">
-        <div className="welcome-copy"><div className="welcome-date"><span className="welcome-spark">✳</span> YOUR FINANCIAL OVERVIEW</div><h1>Good to see you, <em>{firstName}</em></h1><p>Everything in its place. Here’s your account overview.</p><div className="welcome-role"><span className="role-dot" />{roleLabels[user.role] ?? 'Member'} <span className="welcome-separator">·</span> Private workspace</div></div>
-        <div className="welcome-art" aria-hidden="true"><span className="art-ring ring-a" /><span className="art-ring ring-b" /><span className="art-coin">b<span>.</span></span><span className="art-orbit-dot" /></div>
-        <div className="welcome-index">01 <span>/</span> 03</div>
-      </section>
-
-      <section className="section-block account-overview-block">
-        <div className="section-heading"><div><span className="section-kicker">YOUR SPACE</span><h2>Account overview</h2></div><button className="text-link" onClick={() => navigate('/accounts')}>All accounts <Icon name="arrow" size={16} /></button></div>
-        <div className="summary-grid">
-          <div className="summary-card account-count-card"><span className="summary-icon"><Icon name="cards" size={19} /></span><span className="summary-label">Total accounts</span><strong>{accounts === null ? '—' : accounts.length.toString().padStart(2, '0')}</strong><small>{accounts === null ? 'Loading account data' : accounts.length === 1 ? 'Account connected' : 'Accounts connected'}</small><div className="summary-decoration" aria-hidden="true" /></div>
-          <div className="summary-card"><span className="summary-icon summary-icon-light"><Icon name="shield" size={19} /></span><span className="summary-label">Account status</span><strong className="summary-status">{accounts === null ? '—' : accounts.length === 0 ? 'No accounts' : 'In good order'}</strong><small>{accounts === null ? 'Checking your accounts' : `${activeCount} active ${activeCount === 1 ? 'account' : 'accounts'}`}</small><span className="summary-status-line"><i /></span></div>
-        </div>
-        {error && <div className="inline-error" role="alert"><span>We couldn’t load your accounts.</span><small>{error}</small><button onClick={() => window.location.reload()}>Try again</button></div>}
-      </section>
-
-      <div className="dashboard-lower-grid">
-        <section className="section-block account-list-block">
-          <div className="section-heading compact-heading"><div><span className="section-kicker">CONNECTED</span><h2>Your accounts</h2></div><button className="square-link" onClick={() => navigate('/accounts')} aria-label="View all accounts"><Icon name="arrow" size={17} /></button></div>
-          {accounts === null ? <div className="loading-row"><span className="spinner spinner-dark" />Loading accounts</div> : accounts.length === 0 ? <><EmptyState title="No accounts yet" detail="Customer accounts are opened after an administrator reviews your request." />{user.role === 'ACCOUNT_HOLDER' && <button className="button button-outline" onClick={() => navigate('/account-requests')}>Request an account</button>}</> : <div className="account-list">{accounts.slice(0, 4).map((account) => <AccountRow key={account.id} account={account} />)}</div>}
-          {accounts?.length > 4 && <button className="view-all-link" onClick={() => navigate('/accounts')}>View all {accounts.length} accounts <Icon name="arrow" size={15} /></button>}
-        </section>
-
-        {user.role === 'ACCOUNT_HOLDER' && <section className="section-block quick-actions-block">
-          <div className="section-heading compact-heading"><div><span className="section-kicker">ON YOUR TERMS</span><h2>Quick actions</h2></div></div>
-          <div className="quick-actions">
-            <ActionCard title="Deposit" label="Add funds" tone="sage" onClick={() => navigate('/transactions/deposit')} />
-            <ActionCard title="Withdraw" label="Move funds out" tone="cream" onClick={() => navigate('/transactions/withdrawal')} />
-            <ActionCard title="Transfer" label="Between accounts" tone="lavender" onClick={() => navigate('/transactions/transfer')} />
-          </div>
-        </section>}
-      </div>
-
+      <section className="overview-heading"><div><span className="section-kicker">WORKSPACE / OVERVIEW</span><h1>Your money,<br /><span>in motion.</span></h1><p>Welcome back, {firstName}. Here’s where things stand.</p></div><div className="workspace-role"><Icon name="shield" size={20} /><span>{roleLabels[user.role] ?? 'Member'}<small>Your private workspace</small></span></div></section>
+      <section className="overview-metrics" aria-label="Account overview"><div><span>Connected accounts</span><strong>{accounts === null ? '—' : String(accounts.length).padStart(2, '0')}</strong></div><div><span>Active accounts</span><strong>{accounts === null ? '—' : String(activeCount).padStart(2, '0')}</strong></div><div className="metric-note"><span className="metric-symbol" aria-hidden="true">↗</span><p>Every movement.<br /><strong>A record to follow.</strong></p><button className="text-link" onClick={() => navigate('/statements')}>Explore statements <Icon name="arrow" size={16} /></button></div></section>
+      {error && <div className="inline-error" role="alert"><span>We couldn’t load your accounts.</span><small>{error}</small><button onClick={() => window.location.reload()}>Try again</button></div>}
+      {user.role === 'ACCOUNT_HOLDER' && <section className="movement-section"><div><span className="section-kicker">MAKE YOUR NEXT MOVE</span><h2>Money movement</h2></div><div className="quick-actions"><ActionCard title="Transfer" label="Send between accounts" tone="transfer" onClick={() => navigate('/transactions/transfer')} /><ActionCard title="Deposit" label="Add funds to an account" tone="deposit" onClick={() => navigate('/transactions/deposit')} /><ActionCard title="Withdraw" label="Move funds out" tone="withdraw" onClick={() => navigate('/transactions/withdrawal')} /></div></section>}
+      <div className="dashboard-columns"><DashboardActivity request={request} accounts={accounts} /><section className="section-block account-list-block"><div className="section-heading"><div><span className="section-kicker">YOUR ACCOUNTS</span><h2>Connected.</h2></div><button className="square-link" onClick={() => navigate('/accounts')} aria-label="View all accounts"><Icon name="arrow" size={18} /></button></div>
+      {accounts === null ? <div className="loading-row" role="status"><span className="spinner spinner-dark" />Loading accounts</div> : accounts.length === 0 ? <><EmptyState title="Start with an account" detail="Your accounts will appear here once approved." />{user.role === 'ACCOUNT_HOLDER' && <button className="button button-outline" onClick={() => navigate('/account-requests')}>Request an account</button>}</> : <div className="account-list">{accounts.slice(0, 4).map((account) => <AccountRow key={account.id} account={account} />)}</div>}
+      {accounts?.length > 4 && <button className="view-all-link" onClick={() => navigate('/accounts')}>View all {accounts.length} accounts <Icon name="arrow" size={15} /></button>}</section></div>
       {user.role === 'ADMIN' && <section className="section-block role-dashboard-panel"><span className="section-kicker">ADMINISTRATION</span><h2>Operations workspace</h2><p>Review account opening requests, manage user access, and inspect the audit trail.</p><div className="role-dashboard-actions"><button className="button button-outline" onClick={() => navigate('/admin/onboarding')}>Review onboarding</button><button className="button button-outline" onClick={() => navigate('/admin/users')}>Manage users</button><button className="button button-outline" onClick={() => navigate('/audit')}>View audit log</button></div></section>}
       {user.role === 'AUDITOR' && <section className="section-block role-dashboard-panel"><span className="section-kicker">READ ONLY</span><h2>Audit workspace</h2><p>Review assigned-account statements and the audit events available to your role.</p><button className="button button-outline" onClick={() => navigate('/audit')}>Open audit log</button></section>}
-      <DashboardActivity request={request} accounts={accounts} />
     </>
   );
 }
@@ -363,7 +312,7 @@ function AccountsPage({ request, isAdmin, userRole, accountRefreshVersion, refre
   return (
     <section className="section-block full-page-block">
       <div className="page-title-row">
-        <div><span className="section-kicker">YOUR SPACE</span><h1>Accounts</h1><p>Accounts available to your BalanceVault profile.</p></div>
+        <div><span className="section-kicker">YOUR SPACE</span><h1>Accounts</h1><p>Accounts available to your TransferTrail profile.</p></div>
         <div className="account-page-actions">
           {accounts && <span className="count-pill">{accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}</span>}
           {isAdmin && <button className="button button-primary create-account-toggle" onClick={() => setShowCreateForm((visible) => !visible)}><Icon name="plus" size={17} />{showCreateForm ? 'Close form' : 'New account'}</button>}
@@ -418,7 +367,7 @@ function AccountDetailsPage({ accountId, request, selectedAccountId, setSelected
         : account && <>
           <div className="page-title-row detail-title-row"><div><span className="section-kicker">{account.type === 'BUSINESS' ? 'BUSINESS ACCOUNT' : 'PERSONAL ACCOUNT'}</span><h1>{account.accountNumber}</h1><p>Account details and current available balance.</p></div><span className={`status-pill status-${account.status.toLowerCase()}`}><i />{account.status.toLowerCase()}</span></div>
           <div className="account-detail-layout">
-            <article className="detail-balance-card"><span className="detail-card-kicker">CURRENT BALANCE</span><strong>{balance ? formatPaiseAsINR(balance.balancePaise, balance.currencyCode) : 'Balance unavailable'}</strong><small>Balance supplied by the BalanceVault account API.</small><div className="detail-balance-watermark" aria-hidden="true">BV</div></article>
+            <article className="detail-balance-card"><span className="detail-card-kicker">CURRENT BALANCE</span><strong>{balance ? formatPaiseAsINR(balance.balancePaise, balance.currencyCode) : 'Balance unavailable'}</strong><small>Current balance recorded in your ledger.</small><div className="detail-balance-watermark" aria-hidden="true">TT</div></article>
             <article className="detail-info-card"><div className="detail-info-heading"><span className="account-symbol account-symbol-large"><Icon name={account.type === 'BUSINESS' ? 'building' : 'cards'} size={20} /></span><div><span className="section-kicker">ACCOUNT INFORMATION</span><h2>Account details</h2></div></div><dl className="detail-list"><div><dt>Account number</dt><dd>{account.accountNumber}</dd></div><div><dt>Account type</dt><dd>{account.type === 'BUSINESS' ? 'Business' : 'Personal'}</dd></div><div><dt>Status</dt><dd><span className={`status-pill status-${account.status.toLowerCase()}`}><i />{account.status.toLowerCase()}</span></dd></div><div><dt>Currency</dt><dd>{account.currencyCode}</dd></div><div><dt>Created</dt><dd>{formatAccountDate(account.createdAt)}</dd></div></dl></article>
           </div>
           {isAdmin && <AccountPermissions key={account.id} accountId={account.id} request={request} />}
@@ -463,7 +412,7 @@ function CreateAccountForm({ request, onCreated }) {
   return <form className="create-account-form" onSubmit={submit}>
     <div className="create-form-heading"><div><span className="section-kicker">ADMINISTRATION</span><h2>Create customer account</h2><p>The backend verifies your administrator role and the holder’s account status.</p></div><span className="admin-only-pill"><Icon name="shield" size={14} /> ADMIN ONLY</span></div>
     <div className="create-form-grid">
-      <label className="field-label"><span>Account number</span><input value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} maxLength={64} required placeholder="e.g. BV-10428" /></label>
+      <label className="field-label"><span>Account number</span><input value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} maxLength={64} required placeholder="e.g. TT-10428" /></label>
       <label className="field-label"><span>Account type</span><select value={accountType} onChange={(event) => setAccountType(event.target.value)}><option value="PERSONAL">Personal</option><option value="BUSINESS">Business</option></select></label>
       <label className="field-label holder-field"><span>Holder user ID</span><input value={holderUserId} onChange={(event) => setHolderUserId(event.target.value)} autoComplete="off" required placeholder="Account holder UUID" /></label>
     </div>
@@ -493,7 +442,7 @@ function AccountCard({ account, balance, selected, onSelect, isAdmin, request })
 }
 
 function ActionCard({ title, label, tone, onClick }) {
-  return <button className={`action-card action-${tone}`} type="button" onClick={onClick} aria-label={`${title} transaction`}><span className="action-icon"><Icon name="plus" size={19} /></span><span className="action-title">{title}</span><span className="action-label">{label}</span><span className="action-soon">OPEN</span></button>;
+  return <button className={`action-card action-${tone}`} type="button" onClick={onClick} aria-label={`${title} transaction`}><span className="action-icon"><Icon name={title === 'Transfer' ? 'arrow' : title === 'Deposit' ? 'plus' : 'logout'} size={24} /></span><span className="action-title">{title}</span><span className="action-label">{label}</span><span className="action-soon" aria-hidden="true">↗</span></button>;
 }
 
 function ProfileMenu({ user, signOut }) {

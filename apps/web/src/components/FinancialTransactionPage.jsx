@@ -15,7 +15,7 @@ import {
 const transactionDetails = {
   deposit: { type: 'DEPOSIT', title: 'Deposit', verb: 'deposit', endpoint: '/api/deposits', intro: 'Add funds to an eligible account.' },
   withdrawal: { type: 'WITHDRAWAL', title: 'Withdrawal', verb: 'withdraw', endpoint: '/api/withdrawals', intro: 'Move funds from an eligible account.' },
-  transfer: { type: 'TRANSFER', title: 'Transfer', verb: 'transfer', endpoint: '/api/transfers', intro: 'Send funds from your account to any active BalanceVault account.' },
+  transfer: { type: 'TRANSFER', title: 'Transfer', verb: 'transfer', endpoint: '/api/transfers', intro: 'Send funds from your account to any active TransferTrail account.' },
 };
 
 function initialAttempt(userId, type) {

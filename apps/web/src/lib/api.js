@@ -25,7 +25,7 @@ export async function apiRequest(path, { method = 'GET', body, token, signal, on
     });
   } catch (error) {
     if (error.name === 'AbortError') throw error;
-    throw new ApiError('Unable to reach BalanceVault. Check your connection and try again.', 0);
+    throw new ApiError('Unable to reach TransferTrail. Check your connection and try again.', 0);
   }
 
   let payload = {};
