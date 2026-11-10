@@ -96,11 +96,14 @@ export function createApp({
       : 500;
 
     if (status >= 500) {
-      console.error('Unhandled request error', {
-        requestId: _request.id,
-        name: error?.name ?? 'Error',
-      });
-    }
+  console.error('Unhandled request error', {
+    requestId: _request.id,
+    name: error?.name ?? 'Error',
+    code: error?.code ?? null,
+    meta: error?.meta ?? null,
+    clientVersion: error?.clientVersion ?? null,
+  });
+}
 
     response.status(status).json({
       error: status >= 500 ? 'Internal server error' : error.message,
