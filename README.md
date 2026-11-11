@@ -114,7 +114,7 @@ PostgreSQL integration tests run only when the `BALANCEVAULT_TEST_*` variables p
 [Watch the TransferTrail Demo](YOUR_VIDEO_LINK)
 
 ### Quick Preview
-![TransferTrail Demo](docs/assets/demo.gif)
+![TransferTrail Demo](docs/transfertrail-demo.gif)
 
 ## Deployment and recovery
 
