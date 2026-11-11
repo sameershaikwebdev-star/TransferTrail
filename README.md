@@ -106,6 +106,16 @@ git diff --check
 
 PostgreSQL integration tests run only when the `BALANCEVAULT_TEST_*` variables point at disposable databases ending in `_test`. Their setup and role requirements are in [development handoff](docs/DEVELOPMENT_HANDOFF.md). Do not point these variables at `balancevault_dev` or production.
 
+## 🎬 Demo
+
+**Live Website:** https://transfertrail.vercel.app/
+
+### Full Demo Video
+[Watch the TransferTrail Demo](YOUR_VIDEO_LINK)
+
+### Quick Preview
+![TransferTrail Demo](docs/assets/demo.gif)
+
 ## Deployment and recovery
 
 Use the controlled checklist in [deployment configuration](docs/DEPLOYMENT.md). Back up before schema releases with `pg_dump --format=custom --file=balancevault-$(date +%Y%m%dT%H%M%S).dump "$DATABASE_URL"`; restore into a separate recovery database with `pg_restore --no-owner --dbname="$RECOVERY_DATABASE_URL" backup.dump`, then validate before any cutover. Keep the backup encrypted and access-controlled. Do not restore over an existing database as a routine rollback; use a reviewed recovery plan.
