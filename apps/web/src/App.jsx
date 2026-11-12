@@ -49,7 +49,7 @@ function Icon({ name, size = 20 }) {
 function Brand({ inverse = false }) {
   return (
     <a href="/dashboard" onClick={(event) => { event.preventDefault(); navigate('/dashboard'); }} className={`brand ${inverse ? 'brand-inverse' : ''}`} aria-label="TransferTrail dashboard">
-      <span className="brand-mark" aria-hidden="true">↗</span>
+      <span className="brand-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 25 25" fill="none"><path d="M4 6h10v10H4zM11 10h10v10H11z" stroke="currentColor" strokeWidth="2.4"/><path d="m12 3 9 0 0 4" stroke="currentColor" strokeWidth="2.4"/></svg></span>
       <span className="brand-word">TransferTrail</span>
     </a>
   );
@@ -123,14 +123,13 @@ function AuthPage({ mode }) {
 
   return (
     <main className="auth-page">
-      <header className="entry-header"><Brand /><span className="entry-label">YOUR MONEY, IN PERSPECTIVE</span></header>
-      <section className="auth-form-side">
-        <div className="entry-intro"><span className="entry-number">01 / ACCESS</span><h1>Follow the money.<br /><span>Know the story.</span></h1><p>A dedicated space for your accounts, transfers, and ledger.</p></div>
+      <header className="access-header"><Brand /><span className="access-tag"><Icon name="shield" size={14} /> Financial workspace</span></header>
+      <section className="access-layout"><div className="access-orbit" aria-hidden="true"><i /><i /><i /></div>
         <div className="auth-form-card">
           <div className="form-heading">
-            <span className="form-kicker">{isRegister ? 'GET STARTED' : isInvitation ? 'SECURE INVITATION' : 'WELCOME BACK'}</span>
-            <h2>{isRegister ? 'Create your account' : isInvitation ? 'Set your password' : 'Sign in to TransferTrail'}</h2>
-            <p>{isRegister ? 'Set up your secure account in a few steps.' : isInvitation ? 'Choose a password to activate your invited TransferTrail role.' : 'Your accounts, clearly in view.'}</p>
+            <span className="access-icon"><Icon name="lock" size={22} /></span><span className="form-kicker">{isRegister ? 'GET STARTED' : isInvitation ? 'SECURE INVITATION' : 'WELCOME BACK'}</span>
+            <h2>{isRegister ? 'Create your account' : isInvitation ? 'Set your password' : 'Everything starts here.'}</h2>
+            <p>{isRegister ? 'Set up your secure account in a few steps.' : isInvitation ? 'Choose a password to activate your invited TransferTrail role.' : 'Sign in to your TransferTrail workspace.'}</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -146,9 +145,9 @@ function AuthPage({ mode }) {
           </form>
 
           {!isInvitation && <p className="auth-switch">{isRegister ? 'Already have an account?' : 'New to TransferTrail?'} <button type="button" onClick={() => navigate(isRegister ? '/login' : '/register')}>{isRegister ? 'Sign in' : 'Create an account'}</button></p>}
-          <div className="secure-note"><Icon name="lock" size={15} /><span>Your connection is protected. We never display or store your password in the browser after signing in.</span></div>
+          <div className="secure-note"><Icon name="lock" size={15} /><span>Use your assigned account to access the tools available to your role.</span></div>
         </div>
-        <div className="entry-features"><span><b>01</b> Your accounts</span><span><b>02</b> Money movement</span><span><b>03</b> The full record</span></div><p className="auth-legal">TransferTrail / Financial ledger workspace</p>
+        <p className="auth-legal">Your accounts. Your activity. One clear view.</p>
       </section>
     </main>
   );
@@ -186,12 +185,15 @@ function AppShell({ pathname, forbidden = false }) {
 
   return (
     <div className="app-shell">
-      <header className="workspace-header">
-        <div className="workspace-header-inner"><Brand /><div className="workspace-header-right"><BackendBadge /><ProfileMenu user={user} signOut={signOut} /><button className="mobile-menu-button" onClick={() => setMobileMenuOpen((value) => !value)} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen}><span /><span /><span /></button></div></div>
-        <nav className={`main-nav ${mobileMenuOpen ? 'main-nav-open' : ''}`} aria-label="Main navigation">{navItems.map((item) => <a key={item.path} href={item.path} aria-current={pathname === item.path ? 'page' : undefined} className={`nav-link ${pathname === item.path ? 'nav-active' : ''}`} onClick={(event) => { event.preventDefault(); navigate(item.path); }}><Icon name={item.icon} size={17} /><span>{item.label}</span></a>)}</nav>
-      </header>
-      <div className="main-column">
-        <main className="page-content">
+      <a className="skip-link" href="#workspace-main">Skip to content</a>
+      <aside className={`navigation-rail ${mobileMenuOpen ? 'rail-open' : ''}`}><div className="rail-brand"><Brand /></div>
+        <nav className="main-nav" aria-label="Main navigation">{navItems.map((item) => <a key={item.path} href={item.path} title={item.label} aria-current={pathname === item.path || (item.path === '/accounts' && pathname.startsWith('/accounts/')) ? 'page' : undefined} className={`nav-link ${pathname === item.path || (item.path === '/accounts' && pathname.startsWith('/accounts/')) ? 'nav-active' : ''}`} onClick={(event) => { event.preventDefault(); navigate(item.path); }}><Icon name={item.icon} size={21} /><span>{item.label === 'User management' ? 'People' : item.label === 'Account request' ? 'Request' : item.label}</span></a>)}</nav>
+        <div className="rail-bottom"><button onClick={() => navigate('/settings')} title="Settings"><Icon name="shield" /><span>Settings</span></button><button onClick={signOut} title="Sign out"><Icon name="logout" /><span>Sign out</span></button></div>
+      </aside>
+      {mobileMenuOpen && <button className="rail-scrim" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation" />}
+      <div className="main-column"><header className="workspace-topbar"><div className="topbar-context"><button className="mobile-menu-button" onClick={() => setMobileMenuOpen((value) => !value)} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen}><Icon name="grid" /></button><span className="workspace-name">TransferTrail</span><span className="context-divider">/</span><span>{roleLabels[user.role] ?? 'Workspace'}</span></div><div className="topbar-actions"><BackendBadge /><ProfileMenu user={user} signOut={signOut} /></div></header>
+        <main className="page-content" id="workspace-main">
+
           <Suspense fallback={<div className="loading-row" role="status"><span className="spinner spinner-dark" />Loading workspace</div>}>
           {pathname === '/accounts' ? <AccountsPage request={request} isAdmin={isAdmin} userRole={user.role} accountRefreshVersion={accountRefreshVersion} refreshAccounts={refreshAccounts} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />
             : forbidden ? <section className="section-block role-dashboard-panel"><span className="section-kicker">ACCESS RESTRICTED</span><h1>Access denied</h1><p>Your current role cannot open this page.</p><button className="button button-outline" onClick={() => navigate('/dashboard')}>Return to overview</button></section>
@@ -204,7 +206,7 @@ function AppShell({ pathname, forbidden = false }) {
             : pathname.startsWith('/accounts/') ? <AccountDetailsPage isAdmin={isAdmin} accountId={pathname.split('/')[2]} request={request} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />
               : pathname.startsWith('/transactions/') ? <FinancialTransactionPage type={pathname.split('/')[2]} onNavigate={navigate} />
               : pathname.startsWith('/transfers/') ? <TransferDetailsPage request={request} transferId={pathname.split('/')[2]} onNavigate={navigate} />
-                : pathname === '/audit' && ['ADMIN', 'AUDITOR'].includes(user.role) ? <AuditPage request={request} /> : <DashboardPage request={request} user={user} accountRefreshVersion={accountRefreshVersion} />}
+                : pathname === '/audit' && ['ADMIN', 'AUDITOR'].includes(user.role) ? <AuditPage request={request} /> : <DashboardPage request={request} user={user} accountRefreshVersion={accountRefreshVersion} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />}
           </Suspense>
         </main>
         <footer className="app-footer"><span>TransferTrail <i>·</i> Financial clarity, by design.</span><span className="footer-secure"><Icon name="lock" size={13} /> Secure session</span></footer>
@@ -213,35 +215,56 @@ function AppShell({ pathname, forbidden = false }) {
   );
 }
 
-function DashboardPage({ request, user, accountRefreshVersion }) {
+function DashboardPage({ request, user, accountRefreshVersion, selectedAccountId, setSelectedAccountId }) {
   const [accounts, setAccounts] = useState(null);
   const [error, setError] = useState('');
+  const [retryVersion, setRetryVersion] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    fetchAccounts(request, { signal: controller.signal })
-      .then(setAccounts)
-      .catch((requestError) => { if (requestError.name !== 'AbortError') setError(requestError.message); });
+    setError(''); setAccounts(null);
+    fetchAccounts(request, { signal: controller.signal }).then(setAccounts).catch((err) => { if (err.name !== 'AbortError') setError(err.message); });
     return () => controller.abort();
-  }, [accountRefreshVersion, request]);
+  }, [accountRefreshVersion, request, retryVersion]);
+  const selected = accounts?.find((account) => account.id === selectedAccountId) ?? accounts?.[0];
   const firstName = user.fullName?.split(/\s+/)[0] || user.email.split('@')[0];
-  const activeCount = accounts?.filter((account) => account.status === 'ACTIVE').length ?? 0;
-
-  return (
-    <>
-      <section className="overview-heading"><div><span className="section-kicker">WORKSPACE / OVERVIEW</span><h1>Your money,<br /><span>in motion.</span></h1><p>Welcome back, {firstName}. Here’s where things stand.</p></div><div className="workspace-role"><Icon name="shield" size={20} /><span>{roleLabels[user.role] ?? 'Member'}<small>Your private workspace</small></span></div></section>
-      <section className="overview-metrics" aria-label="Account overview"><div><span>Connected accounts</span><strong>{accounts === null ? '—' : String(accounts.length).padStart(2, '0')}</strong></div><div><span>Active accounts</span><strong>{accounts === null ? '—' : String(activeCount).padStart(2, '0')}</strong></div><div className="metric-note"><span className="metric-symbol" aria-hidden="true">↗</span><p>Every movement.<br /><strong>A record to follow.</strong></p><button className="text-link" onClick={() => navigate('/statements')}>Explore statements <Icon name="arrow" size={16} /></button></div></section>
-      {error && <div className="inline-error" role="alert"><span>We couldn’t load your accounts.</span><small>{error}</small><button onClick={() => window.location.reload()}>Try again</button></div>}
-      {user.role === 'ACCOUNT_HOLDER' && <section className="movement-section"><div><span className="section-kicker">MAKE YOUR NEXT MOVE</span><h2>Money movement</h2></div><div className="quick-actions"><ActionCard title="Transfer" label="Send between accounts" tone="transfer" onClick={() => navigate('/transactions/transfer')} /><ActionCard title="Deposit" label="Add funds to an account" tone="deposit" onClick={() => navigate('/transactions/deposit')} /><ActionCard title="Withdraw" label="Move funds out" tone="withdraw" onClick={() => navigate('/transactions/withdrawal')} /></div></section>}
-      <div className="dashboard-columns"><DashboardActivity request={request} accounts={accounts} /><section className="section-block account-list-block"><div className="section-heading"><div><span className="section-kicker">YOUR ACCOUNTS</span><h2>Connected.</h2></div><button className="square-link" onClick={() => navigate('/accounts')} aria-label="View all accounts"><Icon name="arrow" size={18} /></button></div>
-      {accounts === null ? <div className="loading-row" role="status"><span className="spinner spinner-dark" />Loading accounts</div> : accounts.length === 0 ? <><EmptyState title="Start with an account" detail="Your accounts will appear here once approved." />{user.role === 'ACCOUNT_HOLDER' && <button className="button button-outline" onClick={() => navigate('/account-requests')}>Request an account</button>}</> : <div className="account-list">{accounts.slice(0, 4).map((account) => <AccountRow key={account.id} account={account} />)}</div>}
-      {accounts?.length > 4 && <button className="view-all-link" onClick={() => navigate('/accounts')}>View all {accounts.length} accounts <Icon name="arrow" size={15} /></button>}</section></div>
-      {user.role === 'ADMIN' && <section className="section-block role-dashboard-panel"><span className="section-kicker">ADMINISTRATION</span><h2>Operations workspace</h2><p>Review account opening requests, manage user access, and inspect the audit trail.</p><div className="role-dashboard-actions"><button className="button button-outline" onClick={() => navigate('/admin/onboarding')}>Review onboarding</button><button className="button button-outline" onClick={() => navigate('/admin/users')}>Manage users</button><button className="button button-outline" onClick={() => navigate('/audit')}>View audit log</button></div></section>}
-      {user.role === 'AUDITOR' && <section className="section-block role-dashboard-panel"><span className="section-kicker">READ ONLY</span><h2>Audit workspace</h2><p>Review assigned-account statements and the audit events available to your role.</p><button className="button button-outline" onClick={() => navigate('/audit')}>Open audit log</button></section>}
-    </>
-  );
+  return <>
+    <section className="dashboard-heading"><div><span className="section-kicker">YOUR WORKSPACE</span><h1>Hello, {firstName}<span className="greeting-dot">.</span></h1><p>Keep your money movements in focus.</p></div>{user.role === 'ACCOUNT_HOLDER' && <button className="button button-primary" onClick={() => navigate('/transactions/transfer')}><Icon name="arrow" size={17} />New transfer</button>}</section>
+    {error ? <ErrorPanel message={error} onRetry={() => setRetryVersion((value) => value + 1)} /> : <>
+      <div className="dashboard-focus"><AccountSpotlight request={request} accounts={accounts} selected={selected} onSelect={setSelectedAccountId} version={accountRefreshVersion} userRole={user.role} />
+      <section className="workspace-tools"><div className="tools-heading"><h2>{user.role === 'ACCOUNT_HOLDER' ? 'Move money' : 'Workspace tools'}</h2><span className="micro-label">QUICK ACCESS</span></div>
+        {user.role === 'ACCOUNT_HOLDER' ? <div className="quick-actions"><ActionCard title="Transfer" label="Send to another account" tone="transfer" onClick={() => navigate('/transactions/transfer')} /><ActionCard title="Deposit" label="Add funds" tone="deposit" onClick={() => navigate('/transactions/deposit')} /><ActionCard title="Withdraw" label="Take funds out" tone="withdraw" onClick={() => navigate('/transactions/withdrawal')} /></div> : <div className="quick-actions"><ActionCard title="Statements" label="Inspect ledger entries" tone="statement" onClick={() => navigate('/statements')} />{user.role === 'ADMIN' && <ActionCard title="Onboarding" label="Review account requests" tone="onboarding" onClick={() => navigate('/admin/onboarding')} />}<ActionCard title="Audit log" label="Review recorded events" tone="audit" onClick={() => navigate('/audit')} /></div>}
+        <div className="workspace-count"><Icon name="cards" size={17} /><span>{accounts ? `${accounts.length} connected · ${accounts.filter((a) => a.status === 'ACTIVE').length} active` : 'Loading accounts…'}</span><button onClick={() => navigate('/accounts')}>View all <Icon name="arrow" size={14} /></button></div>
+      </section></div>
+      <DashboardActivity request={request} accounts={selected ? [selected] : accounts} onOpen={() => { if (selected) setSelectedAccountId(selected.id); navigate('/statements'); }} />
+    </>}
+  </>;
 }
 
-function DashboardActivity({ request, accounts }) {
+function AccountSpotlight({ request, accounts, selected, onSelect, version, userRole }) {
+  const [balanceState, setBalanceState] = useState({ id: null, balance: null, error: '' });
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    if (!selected) return undefined;
+    const controller = new AbortController();
+    setBalanceState({ id: selected.id, balance: null, error: '' });
+    fetchAccountBalance(request, selected.id, { signal: controller.signal })
+      .then((balance) => setBalanceState({ id: selected.id, balance, error: '' }))
+      .catch((err) => { if (err.name !== 'AbortError') setBalanceState({ id: selected.id, balance: null, error: err.message || 'Balance unavailable' }); });
+    return () => controller.abort();
+  }, [request, selected?.id, version]);
+  const current = balanceState.id === selected?.id ? balanceState : { balance: null, error: '' };
+  return <section className="balance-spotlight"><div className="balance-spotlight-top"><span className="account-chip"><Icon name="cards" size={18} /> Account balance</span><button className="balance-visibility" onClick={() => setVisible((value) => !value)} aria-label={visible ? 'Hide balance' : 'Show balance'}><Icon name={visible ? 'eye' : 'eyeOff'} size={19} /></button></div>
+    {!accounts ? <div className="spotlight-loading" role="status">Loading your accounts…</div> : !selected ? <div className="spotlight-empty"><h2>Your next chapter<br />starts with an account.</h2><p>Approved accounts will appear here.</p>{userRole === 'ACCOUNT_HOLDER' && <button className="button button-primary" onClick={() => navigate('/account-requests')}>Request an account <Icon name="plus" size={16} /></button>}</div> : <>
+      <div className="spotlight-amount" aria-live="polite">{!visible ? '••••••' : current.error ? 'Unavailable' : current.balance ? formatPaiseAsINR(current.balance.balancePaise, current.balance.currencyCode) : '—'}</div>
+      <div className="spotlight-meta"><span>{selected.currencyCode} · {selected.type === 'BUSINESS' ? 'Business' : 'Personal'} account</span><span className={`status-pill status-${selected.status.toLowerCase()}`}><i />{selected.status.toLowerCase()}</span></div>
+      {current.error && <p className="spotlight-error" role="status">{current.error}</p>}
+      <div className="spotlight-account"><label><span>SELECTED ACCOUNT</span><select aria-label="Dashboard account" value={selected.id} onChange={(event) => onSelect(event.target.value)}>{accounts.map((account) => <option key={account.id} value={account.id}>{account.accountNumber}</option>)}</select></label><button onClick={() => navigate(`/accounts/${selected.id}`)} aria-label="Open selected account"><Icon name="arrow" size={20} /></button></div>
+    </>}
+    <span className="spotlight-decoration" aria-hidden="true" />
+  </section>;
+}
+
+function DashboardActivity({ request, accounts, onOpen }) {
   const [statement, setStatement] = useState(null);
   const [error, setError] = useState('');
   const firstAccount = accounts?.[0];
@@ -253,7 +276,8 @@ function DashboardActivity({ request, accounts }) {
     return () => controller.abort();
   }, [firstAccount?.id, request]);
   return <section className="section-block activity-block">
-    <div className="section-heading"><div><span className="section-kicker">LEDGER</span><h2>Transaction activity</h2></div>{firstAccount && <button className="text-link" onClick={() => navigate('/statements')}>Full statements <Icon name="arrow" size={16} /></button>}</div>
+    <div className="section-heading"><div><span className="section-kicker">RECENT MOVEMENTS</span><h2>Activity feed</h2></div>{firstAccount && <button className="text-link" onClick={onOpen}>View statement <Icon name="arrow" size={16} /></button>}</div>
+    {firstAccount && <div className="feed-context"><span>Account {firstAccount.accountNumber}</span><span>Latest 5 entries</span></div>}
     {!accounts && <div className="loading-row"><span className="spinner spinner-dark" />Loading account activity</div>}
     {accounts?.length === 0 && <EmptyState title="No accounts available" detail="Account activity will appear when you have access to an account." icon="activity" />}
     {firstAccount && !statement && !error && <div className="loading-row"><span className="spinner spinner-dark" />Loading ledger activity</div>}
@@ -312,7 +336,7 @@ function AccountsPage({ request, isAdmin, userRole, accountRefreshVersion, refre
   return (
     <section className="section-block full-page-block">
       <div className="page-title-row">
-        <div><span className="section-kicker">YOUR SPACE</span><h1>Accounts</h1><p>Accounts available to your TransferTrail profile.</p></div>
+        <div><span className="section-kicker">YOUR SPACE</span><h1>Accounts</h1><p>Manage the accounts available to your profile.</p></div>
         <div className="account-page-actions">
           {accounts && <span className="count-pill">{accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}</span>}
           {isAdmin && <button className="button button-primary create-account-toggle" onClick={() => setShowCreateForm((visible) => !visible)}><Icon name="plus" size={17} />{showCreateForm ? 'Close form' : 'New account'}</button>}
