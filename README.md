@@ -1,6 +1,6 @@
-# BalanceVault
+# TransferTrail
 
-BalanceVault is a financial ledger application with a React/Vite frontend, an Express API, and PostgreSQL. Financial amounts are integer paise; all money movement is performed by protected PostgreSQL functions.
+TransferTrail is a financial ledger application with a React/Vite frontend, an Express API, and PostgreSQL. Financial amounts are integer paise; all money movement is performed by protected PostgreSQL functions.
 
 ## Local development
 
