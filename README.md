@@ -111,7 +111,7 @@ PostgreSQL integration tests run only when the `BALANCEVAULT_TEST_*` variables p
 **Live Website:** https://transfertrail.vercel.app/
 
 ### Login Page
-![Watch the TransferTrail Login Page](docs/newTransferTrail.png)
+![Watch the TransferTrail Login Page](docs/Screenshot from 2026-11-12 22-15-48.png)
 
 ### Quick Preview
 ![TransferTrail Demo](docs/edited_demo.gif)
