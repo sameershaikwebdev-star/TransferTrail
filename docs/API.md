@@ -1,4 +1,4 @@
-# BalanceVault API
+# TransferTrail API
 
 All protected endpoints require `Authorization: Bearer <access-token>`. The API verifies the token and reloads the active user's current role from PostgreSQL. The user ID and role in request bodies, query parameters, and path parameters never establish identity. Amounts are INR paise represented as decimal integer strings where returned.
 
