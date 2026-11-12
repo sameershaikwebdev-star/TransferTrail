@@ -15,7 +15,8 @@
     "db:studio": "prisma studio",
     "ledger:reconcile": "node scripts/reconcile-ledger.js",
     "admin:bootstrap": "node scripts/bootstrap-admin.js",
-    "admin:provision-actor-key": "node scripts/provision-actor-assertion-key.js"
+    "admin:provision-actor-key": "node scripts/provision-actor-assertion-key.js",
+    "admin:rotate-actor-key": "node scripts/rotate-actor-assertion-key.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",

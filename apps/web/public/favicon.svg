@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#173f35" />
-  <text x="9" y="49" fill="#f5f7f2" font-family="Arial, sans-serif" font-size="48" font-weight="700">b</text>
-  <circle cx="47" cy="46" r="4" fill="#c99b53" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="4" fill="#be421f"/><path d="M17 47 46 18M21 18h25v25" fill="none" stroke="#fffefa" stroke-width="6"/></svg>
