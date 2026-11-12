@@ -1,4 +1,4 @@
-# BalanceVault architecture
+# TransferTrail architecture
 
 ## Monorepo
 
