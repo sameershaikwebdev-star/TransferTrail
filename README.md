@@ -152,7 +152,8 @@ Backend tests:
 ```bash
 npm test
 ```
-
+npm test Executes your root package.json with contains "test":"npm test -w app/api"
+ 
 Production build:
 
 ```bash
@@ -166,7 +167,11 @@ Additional database-dependent integration tests require separate disposable Post
 ## Database roles and migrations
 
 Provision roles with an administrator by reviewing and applying `apps/api/prisma/roles.sql`. Create the database owned by `balancevault_migration_owner`; run Prisma migrations only with `MIGRATION_DATABASE_URL`. The API uses `DATABASE_URL` for ordinary queries and a separate read-only `AUTH_DATABASE_URL` for password verification. The latter alone can read `User.passwordHash`; neither login may inherit migration or function-owner roles. Create a login for each runtime role, grant its corresponding role with inheritance, and set its connection URL in `.env`. Create a separate login for bootstrap as shown below. Keep migration credentials separate from the deployed API service.
-
+Your Prisma confguration confirms:
+```
+datasource:{
+url:env{'MIGRATION_DATABASE_URL'},}
+```
 ```sh
 npm run db:generate
 npm run db:migrate
