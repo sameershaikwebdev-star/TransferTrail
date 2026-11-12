@@ -2,26 +2,166 @@
 
 TransferTrail is a financial ledger application with a React/Vite frontend, an Express API, and PostgreSQL. Financial amounts are integer paise; all money movement is performed by protected PostgreSQL functions.
 
-## Local development
+## Local Development
 
-Requirements: Node.js 24, npm 10 or 11, PostgreSQL 17, and a Redis-compatible service for auth rate limiting.
+### Prerequisites
 
-```sh
+Install the following software before starting:
+
+- Node.js 24.x
+- npm 10 or 11
+- PostgreSQL 17
+- Redis 7 or a compatible Redis service
+- Git
+
+Verify your installations:
+
+```bash
+node --version
+npm --version
+psql --version
+redis-cli --version
+```
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/sameershaikwebdev-star/TransferTrail.git
+cd TransferTrail
+```
+
+### 2. Install dependencies
+
+Run this command from the repository root:
+
+```bash
 npm ci
+```
+
+### 3. Configure environment variables
+
+Create your local environment file:
+
+```bash
 cp .env.example .env
-# Provision the roles and database described below, then fill in .env.
-# Generate JWT_ACCESS_SECRET with: openssl rand -base64 48
-# Generate BALANCEVAULT_ACTOR_ASSERTION_KEY with: openssl rand -hex 32
+```
+
+Generate the application secrets:
+
+```bash
+openssl rand -base64 48
+openssl rand -hex 32
+```
+
+Configure the generated values and your local PostgreSQL and Redis connection strings in `.env`.
+
+Configure these variables:
+
+- `DATABASE_URL`
+- `AUTH_DATABASE_URL`
+- `MIGRATION_DATABASE_URL`
+- `BALANCEVAULT_BOOTSTRAP_DATABASE_URL`
+- `REDIS_URL`
+- `JWT_ACCESS_SECRET`
+- `BALANCEVAULT_ACTOR_ASSERTION_KEY`
+- `WEB_ORIGIN`
+- `VITE_API_BASE_URL`
+
+Use separate PostgreSQL login credentials for runtime, authentication, migration and bootstrap operations. Never use the migration or bootstrap credentials for the running API.
+
+### 4. Start PostgreSQL and Redis
+
+Ensure PostgreSQL and Redis are running before proceeding.
+
+Create a dedicated development database owned by `balancevault_migration_owner`.
+
+Follow the database role setup in:
+
+`apps/api/prisma/roles.sql`
+
+Create the separate runtime, authentication and bootstrap logins and grant only their corresponding database roles.
+
+Use the dedicated migration-owner connection for migrations.
+
+### 5. Generate the Prisma client
+
+From the repository root:
+
+```bash
 npm run db:generate
+```
+
+### 6. Apply database migrations
+
+```bash
 npm run db:migrate
+```
+
+This command uses `MIGRATION_DATABASE_URL`, not the ordinary API runtime connection.
+
+### 7. Provision the actor assertion key
+
+```bash
 npm run admin:provision-actor-key -w apps/api
+```
+
+Use the same `BALANCEVAULT_ACTOR_ASSERTION_KEY` configured in `.env`.
+
+### 8. Bootstrap the first administrator
+
+```bash
 npm run admin:bootstrap -w apps/api
+```
+
+Follow the interactive prompts to create the initial administrator account.
+
+### 9. Start the application
+
+```bash
 npm run dev
 ```
 
-Start PostgreSQL and Redis before running these commands. The frontend uses the API URL configured by `VITE_API_BASE_URL`. The API connects to PostgreSQL and Redis using the settings in `.env`.
+The command starts both applications concurrently.
 
-The frontend runs at `http://localhost:5173` and the API at `http://localhost:3001`. Run either app with `npm run dev:web` or `npm run dev:api`.
+**Frontend:** http://localhost:5173
+
+**Backend API:** http://localhost:3001
+
+**API health:** http://localhost:3001/api/health
+
+You can also start the applications separately:
+
+```bash
+npm run dev:web
+```
+
+```bash
+npm run dev:api
+```
+
+### 10. Run tests and build the application
+
+Frontend tests:
+
+```bash
+npm test -w apps/web
+```
+
+Backend tests:
+
+```bash
+npm test
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Additional database-dependent integration tests require separate disposable PostgreSQL databases ending in `_test` and the `BALANCEVAULT_TEST_*` configuration described in `docs/DEVELOPMENT_HANDOFF.md`.
+
+**Important:** Never run integration tests against your development or production database.
 
 ## Database roles and migrations
 
